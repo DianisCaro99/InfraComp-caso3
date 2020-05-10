@@ -6,16 +6,17 @@ public class ClientServerTask extends Task
 {
 	@Override
 	public void execute() {
-		final Client2 client = new Client2();
+		 Client2 client = new Client2();
 		try {
-			synchronized (client) {
+			synchronized (this) {
 				client.etapa1();
 				client.etapa2();
 				client.etapa3();
 			}
-
+				
+			
 		} catch (Exception e) {
-			System.out.println("F amiguito");
+			e.getStackTrace();
 		}
 	}
 

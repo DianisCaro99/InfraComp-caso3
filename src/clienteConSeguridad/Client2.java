@@ -45,15 +45,15 @@ public class Client2
 	/**
 	 * Certificado digital del servidor
 	 */
-	private static X509Certificate certificadoServidor;
+	private  X509Certificate certificadoServidor;
 	/**
 	 * Tupla de llave (pública-privada del cliente
 	 */
-	private static KeyPair keyPairCliente;
+	private  KeyPair keyPairCliente;
 	/**
 	 * Puerto de comunicación entre cliente-servidor
 	 */
-	private static int puerto;
+	private static int puerto=3400;
 	/**
 	 * Host para la conexión
 	 */
@@ -63,21 +63,20 @@ public class Client2
 	 * @param args
 	 * @throws Exception
 	 */
-	private PrintWriter writer;
+	private PrintWriter out;
 	private BufferedReader br;
 	private SecretKey llaveBlowfish;
     private InputStream inS;
     private OutputStream outS;
-    private BufferedReader in;
-    private PrintWriter out;
+    
     
     public Client2()
     {
         try {
-            this.socket = new Socket("localhost", 9999);
+            this.socket = new Socket(HOST, puerto);
             this.inS = this.socket.getInputStream();
             this.outS = this.socket.getOutputStream();
-            this.in = new BufferedReader(new InputStreamReader(this.inS));
+            this.br = new BufferedReader(new InputStreamReader(this.inS));
             this.out = new PrintWriter(this.outS, true);
         }
         catch (Exception e) {
@@ -91,7 +90,7 @@ public class Client2
 	 * @return Certificado digital de la forma X509
 	 * @throws CertificateException En caso de que no se pueda formar el certificado correctamente
 	 */
-	private static X509Certificate convertirCertificado(String certServidor) throws CertificateException
+	private  X509Certificate convertirCertificado(String certServidor) throws CertificateException
 	{
 		byte[] certiServidorByte = new byte[520];
 		certiServidorByte = DatatypeConverter.parseBase64Binary(certServidor);
@@ -105,7 +104,7 @@ public class Client2
 	 * @return certificado digital del cliente
 	 * @throws Exception En caso de que no se pueda crear correctamente el certificado
 	 */
-	private static X509Certificate generarCertificadoCliente(KeyPair kepair) throws Exception
+	private  X509Certificate generarCertificadoCliente(KeyPair kepair) throws Exception
 	{
 		Calendar endCalendar = Calendar.getInstance();
 		endCalendar.add(Calendar.YEAR, 10);
@@ -122,8 +121,6 @@ public class Client2
     // -----------------------------------------------------------------
 	public synchronized void etapa1() throws Exception
 	{
-		puerto = 3400;
-
 		//Creación del identificador del cliente
 		Random numAleatorio = new Random();
 		id_cliente = numAleatorio.nextInt(9999-1000+1) + 1000;
@@ -133,12 +130,8 @@ public class Client2
 		Security.addProvider((Provider)new BouncyCastleProvider());
 
 		//Preparando el socket para comunicación
-		socket = new Socket(HOST, puerto);
-		writer = new PrintWriter(socket.getOutputStream(), true);
-		br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
 		System.out.println("Cliente inicializado en el puerto: "+puerto);
-		writer.println(Mns_Alg.mns_inicComunicacion());
+		out.println(Mns_Alg.mns_inicComunicacion());
 
 		//Respuesta del servidor 
 		String respuestaServidor = br.readLine();
@@ -153,7 +146,7 @@ public class Client2
 			System.out.println("Comenzó el protocolo de comunicación");
 		}
 
-		writer.println(Mns_Alg.mns_algoritmos());
+		out.println(Mns_Alg.mns_algoritmos());
 
 		respuestaServidor = br.readLine();
 		if(Mns_Alg.verificarError(respuestaServidor))
@@ -183,7 +176,7 @@ public class Client2
 		//Envío del certificado del cliente al servidor
 		byte[] certificadoByte = certificadoCliente.getEncoded();
 		String certificadoString = DatatypeConverter.printBase64Binary(certificadoByte);
-		writer.println(certificadoString);
+		out.println(certificadoString);
 
 		String respuestaServidor = br.readLine();
 		if(Mns_Alg.verificarError(respuestaServidor))
@@ -202,12 +195,12 @@ public class Client2
 		
 		try 
 		{
-			writer.println(Mns_Alg.mns_OK());
+			out.println(Mns_Alg.mns_OK());
 			certificadoServidor = convertirCertificado(strCertificadoServidor);
 		} 
 		catch (Exception e) 
 		{
-			writer.println(Mns_Alg.mns_Error());
+			out.println(Mns_Alg.mns_Error());
 			socket.close();
 		}
 		
@@ -223,7 +216,7 @@ public class Client2
 		
 		//Envío de C(K_S+,<reto>)
 		byte[] retoCifrado = Mns_Alg.cifrar(certificadoServidor.getPublicKey(), Mns_Alg.RSA, DatatypeConverter.printBase64Binary(reto));
-		writer.println(DatatypeConverter.printBase64Binary(retoCifrado));
+		out.println(DatatypeConverter.printBase64Binary(retoCifrado));
 		
 		respuestaServidor = br.readLine();
 		if(Mns_Alg.verificarError(respuestaServidor))
@@ -241,12 +234,11 @@ public class Client2
     // -----------------------------------------------------------------
 	public synchronized void etapa3() throws Exception
 	{
-		PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-		BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+		
 
 		//Envío de C(K_SC,<idUsuario>)
 		byte[] idClienteCifrado = Mns_Alg.cifrar(llaveBlowfish, Mns_Alg.BLOWFISH, Integer.toString(id_cliente));
-		writer.println(DatatypeConverter.printBase64Binary(idClienteCifrado));
+		out.println(DatatypeConverter.printBase64Binary(idClienteCifrado));
 		System.out.println("Se envío el identificador del cliente al servidor");
 		
 		//Recepción de C(K_SC,<hhmm>)
@@ -255,13 +247,13 @@ public class Client2
 		{
 			String horario = Mns_Alg.descifrarHHMM(llaveBlowfish, Mns_Alg.BLOWFISH, DatatypeConverter.parseBase64Binary(respuestaServidor));
 			System.out.println("La hora enviada por el servidor es: "+ horario);
-			writer.println(Mns_Alg.mns_OK());
+			out.println(Mns_Alg.mns_OK());
 			System.out.println("Se terminó la ejecución correctamente.");
 			socket.close();
 		} 
 		catch (Exception e) 
 		{
-			writer.println(Mns_Alg.mns_Error());
+			out.println(Mns_Alg.mns_Error());
 			socket.close();
 		}
 	}
