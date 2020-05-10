@@ -1,7 +1,7 @@
 package cliente;
 
 import java.security.KeyPair;
-import java.security.cert.CertificateEncodingException;
+
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -11,7 +11,6 @@ import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;

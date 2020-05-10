@@ -88,7 +88,7 @@ public class D extends Thread {
 		String[] cadenas;
 		cadenas = new String[numCadenas];
 
-		String feedback;
+		
 		String linea;
 	    System.out.println(dlg + "Empezando atencion.");
 	        try {
