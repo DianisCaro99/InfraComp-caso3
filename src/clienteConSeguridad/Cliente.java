@@ -1,7 +1,6 @@
-package cliente;
+package clienteConSeguridad;
 
 import java.security.KeyPair;
-
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -13,7 +12,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
@@ -28,12 +26,12 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-public class Client2 
+public class Cliente 
 {
 	/**
 	 * Socket de comunicación
 	 */
-	private Socket socket;
+	private static Socket socket;
 	/**
 	 * Identificador del cliente
 	 */
@@ -63,28 +61,157 @@ public class Client2
 	 * @param args
 	 * @throws Exception
 	 */
-	private PrintWriter writer;
-	private BufferedReader br;
-	private SecretKey llaveBlowfish;
-    private InputStream inS;
-    private OutputStream outS;
-    private BufferedReader in;
-    private PrintWriter out;
-    
-    public Client2()
-    {
-        try {
-            this.socket = new Socket("localhost", 9999);
-            this.inS = this.socket.getInputStream();
-            this.outS = this.socket.getOutputStream();
-            this.in = new BufferedReader(new InputStreamReader(this.inS));
-            this.out = new PrintWriter(this.outS, true);
-        }
-        catch (Exception e) {
-            System.out.println("Fail Opening de Client Socket: " + e.getMessage());
-        }
-    }
+	public static void main(String[] args) throws Exception
+	{
+		// -----------------------------------------------------------------
+	    // Etapa1: Seleccionar algoritmos e iniciar sesión
+	    // -----------------------------------------------------------------
+		
+		System.out.println("Establezca el puerto conexión: ");
+		InputStreamReader input = new InputStreamReader(System.in);
+		BufferedReader br = new BufferedReader(input);
+		puerto = Integer.parseInt(br.readLine());
 
+		//Creación del identificador del cliente
+		Random numAleatorio = new Random();
+		id_cliente = numAleatorio.nextInt(9999-1000+1) + 1000;
+
+		//Asegurando conexion con el cliente
+		System.out.println("Empezando cliente "+ id_cliente +" en puerto: " + puerto);        
+		Security.addProvider((Provider)new BouncyCastleProvider());
+
+		//Preparando el socket para comunicación
+		socket = new Socket(HOST, puerto);
+		PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+		br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+		System.out.println("Cliente inicializado en el puerto: "+puerto);
+		writer.println(Mns_Alg.mns_inicComunicacion());
+
+		//Respuesta del servidor 
+		String respuestaServidor = br.readLine();
+
+		if(Mns_Alg.verificarError(respuestaServidor))
+		{
+			System.out.println("Hubo un error en la comunicación");
+			socket.close();
+		}
+		else
+		{
+			System.out.println("Comenzó el protocolo de comunicación");
+		}
+
+		writer.println(Mns_Alg.mns_algoritmos());
+
+		respuestaServidor = br.readLine();
+		if(Mns_Alg.verificarError(respuestaServidor))
+		{
+			System.out.println("Hubo un error en la comunicación");
+			socket.close();
+		}
+		else
+		{
+			System.out.println("Se enviaron los algoritmos seleccionados");
+		}
+		
+		// -----------------------------------------------------------------
+	    // Etapa2: Autenticación de	cliente	y servidor
+	    // -----------------------------------------------------------------
+		
+		//Creación del par de llave pública y privada del del cliente
+		try 
+		{keyPairCliente = Mns_Alg.llaveCliente();}
+		catch (Exception e) 
+		{System.out.println("Error en la creación de la llave: " + e.getMessage());}
+
+		//Creación de certifado del cliente
+		try 
+		{certificadoCliente = generarCertificadoCliente(keyPairCliente);}
+		catch (Exception e) 
+		{System.out.println("Error en la creación del certificado: " + e.getMessage());}
+
+		//Envío del certificado del cliente al servidor
+		byte[] certificadoByte = certificadoCliente.getEncoded();
+		String certificadoString = DatatypeConverter.printBase64Binary(certificadoByte);
+		writer.println(certificadoString);
+
+		respuestaServidor = br.readLine();
+		if(Mns_Alg.verificarError(respuestaServidor))
+		{
+			System.out.println("Hubo un error en la comunicación");
+			socket.close();
+		}
+		else
+		{
+			System.out.println("Se envío el certificado digital del cliente al servidor");
+		}
+
+		//Obtención del certificado del servidor
+		String strCertificadoServidor = br.readLine(); 
+		System.out.println("Se recibió el certificado digital del servidor");
+		
+		try 
+		{
+			writer.println(Mns_Alg.mns_OK());
+			certificadoServidor = convertirCertificado(strCertificadoServidor);
+		} 
+		catch (Exception e) 
+		{
+			writer.println(Mns_Alg.mns_Error());
+			socket.close();
+		}
+		
+		//Recepción de C(K_C+,K_SC)
+		respuestaServidor = br.readLine();
+		SecretKey llaveBlowfish = Mns_Alg.llavePrivadaServidor(keyPairCliente, respuestaServidor);
+		
+		//Recepción de C(K_SC,<reto>)
+		respuestaServidor = br.readLine();
+		byte[] reto = Mns_Alg.descifrar(llaveBlowfish, Mns_Alg.BLOWFISH, DatatypeConverter.parseBase64Binary(respuestaServidor));
+		System.out.println("Se recibió el reto: "+ DatatypeConverter.printBase64Binary(reto));
+		
+		
+		//Envío de C(K_S+,<reto>)
+		byte[] retoCifrado = Mns_Alg.cifrar(certificadoServidor.getPublicKey(), Mns_Alg.RSA, DatatypeConverter.printBase64Binary(reto));
+		writer.println(DatatypeConverter.printBase64Binary(retoCifrado));
+		
+		respuestaServidor = br.readLine();
+		if(Mns_Alg.verificarError(respuestaServidor))
+		{
+			System.out.println("Hubo un error en la comunicación");
+			socket.close();
+		}
+		else
+		{
+			System.out.println("Se envió el reto del cliente al servidor");
+		}
+		
+		// -----------------------------------------------------------------
+	    // Etapa3: Reporte y manejo	de la actualización
+	    // -----------------------------------------------------------------
+		
+		//Envío de C(K_SC,<idUsuario>)
+		byte[] idClienteCifrado = Mns_Alg.cifrar(llaveBlowfish, Mns_Alg.BLOWFISH, Integer.toString(id_cliente));
+		writer.println(DatatypeConverter.printBase64Binary(idClienteCifrado));
+		System.out.println("Se envío el identificador del cliente al servidor");
+		
+		//Recepción de C(K_SC,<hhmm>)
+		respuestaServidor = br.readLine();
+		try 
+		{
+			String horario = Mns_Alg.descifrarHHMM(llaveBlowfish, Mns_Alg.BLOWFISH, DatatypeConverter.parseBase64Binary(respuestaServidor));
+			System.out.println("La hora enviada por el servidor es: "+ horario);
+			writer.println(Mns_Alg.mns_OK());
+			System.out.println("Se terminó la ejecución correctamente.");
+			socket.close();
+		} 
+		catch (Exception e) 
+		{
+			writer.println(Mns_Alg.mns_Error());
+			socket.close();
+		}
+		
+	}
 	/**
 	 * Transforma una cadena de caracteres en un certificado X509
 	 * @param certServidor Cadena de caracteres que conforman el certificado
@@ -117,160 +244,5 @@ public class Client2
 		X509CertificateHolder x509CertificateHolder = x509v3CertificateBuilder.build(contentsigner);
 		return new JcaX509CertificateConverter().setProvider("BC").getCertificate(x509CertificateHolder);
 	}
-	// -----------------------------------------------------------------
-    // Etapa1: Seleccionar algoritmos e iniciar sesión
-    // -----------------------------------------------------------------
-	public synchronized void etapa1() throws Exception
-	{
-		puerto = 3400;
 
-		//Creación del identificador del cliente
-		Random numAleatorio = new Random();
-		id_cliente = numAleatorio.nextInt(9999-1000+1) + 1000;
-
-		//Asegurando conexion con el cliente
-		System.out.println("Empezando cliente "+ id_cliente +" en puerto: " + puerto);        
-		Security.addProvider((Provider)new BouncyCastleProvider());
-
-		//Preparando el socket para comunicación
-		socket = new Socket(HOST, puerto);
-		writer = new PrintWriter(socket.getOutputStream(), true);
-		br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-		System.out.println("Cliente inicializado en el puerto: "+puerto);
-		writer.println(Mns_Alg.mns_inicComunicacion());
-
-		//Respuesta del servidor 
-		String respuestaServidor = br.readLine();
-
-		if(Mns_Alg.verificarError(respuestaServidor))
-		{
-			System.out.println("Hubo un error en la comunicación");
-			socket.close();
-		}
-		else
-		{
-			System.out.println("Comenzó el protocolo de comunicación");
-		}
-
-		writer.println(Mns_Alg.mns_algoritmos());
-
-		respuestaServidor = br.readLine();
-		if(Mns_Alg.verificarError(respuestaServidor))
-		{
-			System.out.println("Hubo un error en la comunicación");
-			socket.close();
-		}
-		else
-		{
-			System.out.println("Se enviaron los algoritmos seleccionados");
-		}
-	}
-	// -----------------------------------------------------------------
-    // Etapa2: Autenticación de	cliente	y servidor
-    // -----------------------------------------------------------------
-	public synchronized void etapa2() throws Exception
-	{
-		//Creación del par de llave pública y privada del del cliente
-		keyPairCliente = Mns_Alg.llaveCliente();
-
-		//Creación de certifado del cliente
-		try 
-		{certificadoCliente = generarCertificadoCliente(keyPairCliente);}
-		catch (Exception e) 
-		{System.out.println("Error en la creación del certificado: " + e.getMessage());}
-
-		//Envío del certificado del cliente al servidor
-		byte[] certificadoByte = certificadoCliente.getEncoded();
-		String certificadoString = DatatypeConverter.printBase64Binary(certificadoByte);
-		writer.println(certificadoString);
-
-		String respuestaServidor = br.readLine();
-		if(Mns_Alg.verificarError(respuestaServidor))
-		{
-			System.out.println("Hubo un error en la comunicación");
-			socket.close();
-		}
-		else
-		{
-			System.out.println("Se envío el certificado digital del cliente al servidor");
-		}
-
-		//Obtención del certificado del servidor
-		String strCertificadoServidor = br.readLine(); 
-		System.out.println("Se recibió el certificado digital del servidor");
-		
-		try 
-		{
-			writer.println(Mns_Alg.mns_OK());
-			certificadoServidor = convertirCertificado(strCertificadoServidor);
-		} 
-		catch (Exception e) 
-		{
-			writer.println(Mns_Alg.mns_Error());
-			socket.close();
-		}
-		
-		//Recepción de C(K_C+,K_SC)
-		respuestaServidor = br.readLine();
-		llaveBlowfish = Mns_Alg.llavePrivadaServidor(keyPairCliente, respuestaServidor);
-		
-		//Recepción de C(K_SC,<reto>)
-		respuestaServidor = br.readLine();
-		byte[] reto = Mns_Alg.descifrar(llaveBlowfish, Mns_Alg.BLOWFISH, DatatypeConverter.parseBase64Binary(respuestaServidor));
-		System.out.println("Se recibió el reto: "+ DatatypeConverter.printBase64Binary(reto));
-		
-		
-		//Envío de C(K_S+,<reto>)
-		byte[] retoCifrado = Mns_Alg.cifrar(certificadoServidor.getPublicKey(), Mns_Alg.RSA, DatatypeConverter.printBase64Binary(reto));
-		writer.println(DatatypeConverter.printBase64Binary(retoCifrado));
-		
-		respuestaServidor = br.readLine();
-		if(Mns_Alg.verificarError(respuestaServidor))
-		{
-			System.out.println("Hubo un error en la comunicación");
-			socket.close();
-		}
-		else
-		{
-			System.out.println("Se envió el reto del cliente al servidor");
-		}
-	}
-	// -----------------------------------------------------------------
-    // Etapa3: Reporte y manejo	de la actualización
-    // -----------------------------------------------------------------
-	public synchronized void etapa3() throws Exception
-	{
-		PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-		BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-		//Envío de C(K_SC,<idUsuario>)
-		byte[] idClienteCifrado = Mns_Alg.cifrar(llaveBlowfish, Mns_Alg.BLOWFISH, Integer.toString(id_cliente));
-		writer.println(DatatypeConverter.printBase64Binary(idClienteCifrado));
-		System.out.println("Se envío el identificador del cliente al servidor");
-		
-		//Recepción de C(K_SC,<hhmm>)
-		String respuestaServidor = br.readLine();
-		try 
-		{
-			String horario = Mns_Alg.descifrarHHMM(llaveBlowfish, Mns_Alg.BLOWFISH, DatatypeConverter.parseBase64Binary(respuestaServidor));
-			System.out.println("La hora enviada por el servidor es: "+ horario);
-			writer.println(Mns_Alg.mns_OK());
-			System.out.println("Se terminó la ejecución correctamente.");
-			socket.close();
-		} 
-		catch (Exception e) 
-		{
-			writer.println(Mns_Alg.mns_Error());
-			socket.close();
-		}
-	}
-	
-	public static void main(String[] args) throws Exception
-	{
-		final Client2 client = new Client2();
-		client.etapa1();
-		client.etapa2();
-		client.etapa3();
-	}
 }

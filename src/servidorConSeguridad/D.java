@@ -1,4 +1,4 @@
-package servidor;
+package servidorConSeguridad;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -57,7 +57,8 @@ public class D extends Thread {
 		}
 	}
 	
-	private boolean validoAlgHMAC(String nombre) {
+	private boolean validoAlgHMAC(String nombre) 
+	{
 		return ((nombre.equals(S.HMACMD5) || 
 			 nombre.equals(S.HMACSHA1) ||
 			 nombre.equals(S.HMACSHA256) ||
@@ -70,7 +71,7 @@ public class D extends Thread {
 	 * Generacion del archivo log. 
 	 * Nota: 
 	 * - Debe conservar el metodo . 
-	 * - Es el Ãºnico metodo permitido para escribir en el log.
+	 * - Es el unico metodo permitido para escribir en el log.
 	 */
 	private synchronized void escribirMensaje(String pCadena) {
 		
