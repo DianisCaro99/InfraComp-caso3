@@ -13,7 +13,7 @@ public class ClientServerTask extends Task
 				client.etapa2();
 				client.etapa3();
 			}
-			
+
 		} catch (Exception e) {
 			System.out.println("F amiguito");
 		}
