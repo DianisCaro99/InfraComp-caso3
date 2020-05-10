@@ -30,7 +30,6 @@ public class D extends Thread {
 	public static final String REC = "recibio-";
 	public static final String ENVIO = "envio-";
 
-	// Atributos
 	private Socket sc = null;
 	private String dlg;
 	private byte[] mybyte;
@@ -73,7 +72,7 @@ public class D extends Thread {
 	 * - Debe conservar el metodo . 
 	 * - Es el Ãºnico metodo permitido para escribir en el log.
 	 */
-	private void escribirMensaje(String pCadena) {
+	private synchronized void escribirMensaje(String pCadena) {
 		
 		try {
 			FileWriter fw = new FileWriter(file,true);
@@ -252,7 +251,8 @@ public class D extends Thread {
 	    return DatatypeConverter.printBase64Binary(array);
 	}
 
-	public static byte[] toByteArray(String s) {
+	public static byte[] toByteArray(String s) 
+	{
 	    return DatatypeConverter.parseBase64Binary(s);
 	}
 	
