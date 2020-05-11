@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
@@ -27,8 +28,6 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-
-import clienteConSeguridad.Mns_Alg;
 
 public class ClienteSinSeguridad 
 {
@@ -55,7 +54,7 @@ public class ClienteSinSeguridad
 	/**
 	 * Puerto de comunicación entre cliente-servidor
 	 */
-	private static int puerto;
+	private static int puerto=3400;
 	/**
 	 * Host para la conexión
 	 */
@@ -65,19 +64,25 @@ public class ClienteSinSeguridad
 	 * @param args
 	 * @throws Exception
 	 */
-	private PrintWriter writer;
+	private PrintWriter out;
 	private BufferedReader br;
+    private InputStream inS;
+    private OutputStream outS;
 	private SecretKey k_SC;
 
 	public ClienteSinSeguridad()
 	{
 		try 
 		{
-			this.socket = new Socket("localhost", 9999);
-		}
-		catch (Exception e) {
-			System.out.println("Fail Opening de Client Socket: " + e.getMessage());
-		}
+            this.socket = new Socket(HOST, puerto);
+            this.inS = this.socket.getInputStream();
+            this.outS = this.socket.getOutputStream();
+            this.br = new BufferedReader(new InputStreamReader(this.inS));
+            this.out = new PrintWriter(this.outS, true);
+        }
+        catch (Exception e) {
+            System.out.println("Fail Opening de Client Socket: " + e.getMessage());
+        }
 	}
 
 	/**
@@ -117,8 +122,6 @@ public class ClienteSinSeguridad
 	// -----------------------------------------------------------------
 	public synchronized void etapa1() throws Exception
 	{
-		puerto = 3400;
-
 		//Creación del identificador del cliente
 		Random numAleatorio = new Random();
 		id_cliente = numAleatorio.nextInt(9999-1000+1) + 1000;
@@ -127,13 +130,8 @@ public class ClienteSinSeguridad
 		System.out.println("Empezando cliente "+ id_cliente +" en puerto: " + puerto);        
 		Security.addProvider((Provider)new BouncyCastleProvider());
 
-		//Preparando el socket para comunicación
-		socket = new Socket(HOST, puerto);
-		writer = new PrintWriter(socket.getOutputStream(), true);
-		br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
 		System.out.println("Cliente inicializado en el puerto: "+puerto);
-		writer.println(MnsSinSeguridad.mns_inicComunicacion());
+		out.println(MnsSinSeguridad.mns_inicComunicacion());
 
 		//Respuesta del servidor 
 		String respuestaServidor = br.readLine();
@@ -148,7 +146,7 @@ public class ClienteSinSeguridad
 			System.out.println("Comenzó el protocolo de comunicación");
 		}
 
-		writer.println(MnsSinSeguridad.mns_algoritmos());
+		out.println(MnsSinSeguridad.mns_algoritmos());
 
 		respuestaServidor = br.readLine();
 		if(MnsSinSeguridad.verificarError(respuestaServidor))
@@ -181,7 +179,7 @@ public class ClienteSinSeguridad
 		//Envío del certificado del cliente al servidor
 		byte[] certificadoByte = certificadoCliente.getEncoded();
 		String certificadoString = DatatypeConverter.printBase64Binary(certificadoByte);
-		writer.println(certificadoString);
+		out.println(certificadoString);
 
 		String respuestaServidor = br.readLine();
 		if(MnsSinSeguridad.verificarError(respuestaServidor))
@@ -200,12 +198,12 @@ public class ClienteSinSeguridad
 
 		try 
 		{
-			writer.println(MnsSinSeguridad.mns_OK());
+			out.println(MnsSinSeguridad.mns_OK());
 			certificadoServidor = convertirCertificado(strCertificadoServidor);
 		} 
 		catch (Exception e) 
 		{
-			writer.println(MnsSinSeguridad.mns_Error());
+			out.println(MnsSinSeguridad.mns_Error());
 			socket.close();
 		}
 
@@ -213,21 +211,21 @@ public class ClienteSinSeguridad
 		String strK_SC = br.readLine();
 		try
 		{
-			byte[] decodedKey = Base64.getDecoder().decode(strK_SC);
-			k_SC = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES"); 
+//			byte[] decodedKey = Base64.getDecoder().decode(strK_SC);
+//			k_SC = new SecretKeySpec(decodedKey, 0, decodedKey.length, "AES"); 
 			System.out.println("Se recibió correctamente K_SC");
 		}
 		catch (Exception e)
 		{
 			socket.close();
 		}
-
+		
 		//Obtención del reto del servidor
-		String strReto = "000";
+		String strReto = br.readLine();
 		System.out.println("Se recibió el reto");
 
 		//Envío del reto al servidor
-		writer.println(strReto);
+		out.println(strReto);
 
 		respuestaServidor = br.readLine();
 		if(MnsSinSeguridad.verificarError(respuestaServidor))
@@ -246,7 +244,7 @@ public class ClienteSinSeguridad
 	public synchronized void etapa3() throws Exception
 	{
 		//Envío de <idUsuario>
-		writer.println(id_cliente);
+		out.println(id_cliente);
 		System.out.println("Se envío el identificador del cliente al servidor");
 
 		//Recepción de <hhmm>
@@ -255,22 +253,20 @@ public class ClienteSinSeguridad
 		{
 			verificarFormato(respuestaServidor);
 			System.out.println("La hora enviada por el servidor es: "+ respuestaServidor);
-			writer.println(MnsSinSeguridad.mns_OK());
+			out.println(MnsSinSeguridad.mns_OK());
 			System.out.println("Se terminó la ejecución correctamente.");
 			socket.close();
 		} 
 		catch (Exception e) 
 		{
-			writer.println(MnsSinSeguridad.mns_Error());
+			out.println(MnsSinSeguridad.mns_Error());
 			socket.close();
 		}
 	}
 
 	public void verificarFormato(String hhmm) throws Exception
 	{
-		String[] hora_min = hhmm.split(":");
-		Integer.parseInt(hora_min[0]);
-		Integer.parseInt(hora_min[1]);
+		Integer.parseInt(hhmm);
 	}
 
 	public static void main(String[] args) throws Exception

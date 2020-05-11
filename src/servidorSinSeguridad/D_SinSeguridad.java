@@ -172,6 +172,7 @@ public class D_SinSeguridad extends Thread {
 				
 				/***** Fase 5: Envia llave simetrica *****/
 				SecretKey simetrica = S_SinSeguridad.kgg(algoritmos[1]);
+				ac.println(simetrica);
 				cadenas[7] = dlg +  ENVIO + "llave K_SC al cliente. continuado.";
 				System.out.println(cadenas[7]);
 				
@@ -183,7 +184,6 @@ public class D_SinSeguridad extends Thread {
 
 				ac.println(strReto);
 				cadenas[8] = dlg + ENVIO + strReto + "-reto al cliente. continuando ";
-				ac.println("000");
 				System.out.println(cadenas[8]);
 
 				/***** Fase 6: Recibe reto del cliente *****/
@@ -215,7 +215,7 @@ public class D_SinSeguridad extends Thread {
 				while (strvalor.length()%4!=0) strvalor = "0" + strvalor;
 				cadenas[11] = dlg + ENVIO + strvalor + "- continuado.";
 				System.out.println(cadenas[11]);
-		        
+		        ac.println(strvalor);
 				linea = dc.readLine();	
 				if (linea.equals(OK)) {
 					cadenas[12] = dlg + REC + linea + "-Terminando exitosamente.";
