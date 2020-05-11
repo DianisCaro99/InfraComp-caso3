@@ -12,7 +12,7 @@ import java.security.cert.X509Certificate;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 	
-public class C 
+public class C_SinSeguridad 
 {
 	private static ServerSocket ss;	
 	private static final String MAESTRO = "MAESTRO: ";
@@ -36,8 +36,8 @@ public class C
 		
 		// Crea el archivo de log
 		File file = null;
-		keyPairServidor = S.grsa();
-		certSer = S.gc(keyPairServidor); 
+		keyPairServidor = S_SinSeguridad.grsa();
+		certSer = S_SinSeguridad.gc(keyPairServidor); 
 		String ruta = "./resultados.txt";
 		   
         file = new File(ruta);
@@ -48,7 +48,7 @@ public class C
         FileWriter fw = new FileWriter(file);
         fw.close();
 
-        D.init(certSer, keyPairServidor,file);
+        D_SinSeguridad.init(certSer, keyPairServidor,file);
         
 		// Crea el socket que escucha en el puerto seleccionado.
 		ss = new ServerSocket(ip);
@@ -63,7 +63,7 @@ public class C
 			{
 					Socket sc = ss.accept();
 					System.out.println(MAESTRO + "Cliente " + i + " aceptado.");
-					executorService.execute(new D(sc, i));
+					executorService.execute(new D_SinSeguridad(sc, i));
 			}
 		} 
 		catch (Exception e) 

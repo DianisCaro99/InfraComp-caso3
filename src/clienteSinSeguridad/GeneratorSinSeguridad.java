@@ -3,11 +3,11 @@ package clienteSinSeguridad;
 import uniandes.gload.core.Task;
 import uniandes.gload.core.LoadGenerator;
 
-public class Generator
+public class GeneratorSinSeguridad
 {
     private LoadGenerator generator;
     
-    public Generator() 
+    public GeneratorSinSeguridad() 
     {
         final Task work = this.createTask();
         final int numberOfTasks = 10;
@@ -16,10 +16,10 @@ public class Generator
     }
     
     private Task createTask() {
-        return new ClientServerTask();
+        return new ClientServerTaskSinSeguridad();
     }
     
     public static void main(final String... args) {
-        final Generator gen = new Generator();
+        final GeneratorSinSeguridad gen = new GeneratorSinSeguridad();
     }
 }

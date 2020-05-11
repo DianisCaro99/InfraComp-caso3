@@ -2,11 +2,11 @@ package clienteSinSeguridad;
 
 import uniandes.gload.core.Task;
 
-public class ClientServerTask extends Task
+public class ClientServerTaskSinSeguridad extends Task
 {
 	@Override
 	public void execute() {
-		final Cliente client = new Cliente();
+		final ClienteSinSeguridad client = new ClienteSinSeguridad();
 		try {
 			synchronized (client) {
 				client.etapa1();

@@ -1,8 +1,6 @@
 package clienteSinSeguridad;
 
-import java.security.Key;
 import java.security.KeyPair;
-
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -16,7 +14,6 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.net.Socket;
@@ -31,7 +28,9 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-public class Cliente 
+import clienteConSeguridad.Mns_Alg;
+
+public class ClienteSinSeguridad 
 {
 	/**
 	 * Socket de comunicación
@@ -68,17 +67,13 @@ public class Cliente
 	 */
 	private PrintWriter writer;
 	private BufferedReader br;
-	private SecretKey llaveBlowfish;
-	private InputStream inS;
-	private OutputStream outS;
 	private SecretKey k_SC;
 
-	public Cliente()
+	public ClienteSinSeguridad()
 	{
-		try {
+		try 
+		{
 			this.socket = new Socket("localhost", 9999);
-			this.inS = this.socket.getInputStream();
-			this.outS = this.socket.getOutputStream();
 		}
 		catch (Exception e) {
 			System.out.println("Fail Opening de Client Socket: " + e.getMessage());
@@ -138,12 +133,12 @@ public class Cliente
 		br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
 		System.out.println("Cliente inicializado en el puerto: "+puerto);
-		writer.println(Mns_Alg.mns_inicComunicacion());
+		writer.println(MnsSinSeguridad.mns_inicComunicacion());
 
 		//Respuesta del servidor 
 		String respuestaServidor = br.readLine();
 
-		if(Mns_Alg.verificarError(respuestaServidor))
+		if(MnsSinSeguridad.verificarError(respuestaServidor))
 		{
 			System.out.println("Hubo un error en la comunicación");
 			socket.close();
@@ -153,10 +148,10 @@ public class Cliente
 			System.out.println("Comenzó el protocolo de comunicación");
 		}
 
-		writer.println(Mns_Alg.mns_algoritmos());
+		writer.println(MnsSinSeguridad.mns_algoritmos());
 
 		respuestaServidor = br.readLine();
-		if(Mns_Alg.verificarError(respuestaServidor))
+		if(MnsSinSeguridad.verificarError(respuestaServidor))
 		{
 			System.out.println("Hubo un error en la comunicación");
 			socket.close();
@@ -172,7 +167,10 @@ public class Cliente
 	public synchronized void etapa2() throws Exception
 	{
 		//Creación del par de llave pública y privada del del cliente
-		keyPairCliente = Mns_Alg.llaveCliente();
+		try 
+		{keyPairCliente = MnsSinSeguridad.llaveCliente();}
+		catch (Exception e) 
+		{System.out.println("Error en la creación de la llave: " + e.getMessage());}
 
 		//Creación de certifado del cliente
 		try 
@@ -181,10 +179,12 @@ public class Cliente
 		{System.out.println("Error en la creación del certificado: " + e.getMessage());}
 
 		//Envío del certificado del cliente al servidor
-		writer.println(certificadoCliente);
+		byte[] certificadoByte = certificadoCliente.getEncoded();
+		String certificadoString = DatatypeConverter.printBase64Binary(certificadoByte);
+		writer.println(certificadoString);
 
 		String respuestaServidor = br.readLine();
-		if(Mns_Alg.verificarError(respuestaServidor))
+		if(MnsSinSeguridad.verificarError(respuestaServidor))
 		{
 			System.out.println("Hubo un error en la comunicación");
 			socket.close();
@@ -200,12 +200,12 @@ public class Cliente
 
 		try 
 		{
-			writer.println(Mns_Alg.mns_OK());
+			writer.println(MnsSinSeguridad.mns_OK());
 			certificadoServidor = convertirCertificado(strCertificadoServidor);
 		} 
 		catch (Exception e) 
 		{
-			writer.println(Mns_Alg.mns_Error());
+			writer.println(MnsSinSeguridad.mns_Error());
 			socket.close();
 		}
 
@@ -223,14 +223,14 @@ public class Cliente
 		}
 
 		//Obtención del reto del servidor
-		String strReto = br.readLine(); 
+		String strReto = "000";
 		System.out.println("Se recibió el reto");
 
 		//Envío del reto al servidor
 		writer.println(strReto);
 
 		respuestaServidor = br.readLine();
-		if(Mns_Alg.verificarError(respuestaServidor))
+		if(MnsSinSeguridad.verificarError(respuestaServidor))
 		{
 			System.out.println("Hubo un error en la comunicación");
 			socket.close();
@@ -255,13 +255,13 @@ public class Cliente
 		{
 			verificarFormato(respuestaServidor);
 			System.out.println("La hora enviada por el servidor es: "+ respuestaServidor);
-			writer.println(Mns_Alg.mns_OK());
+			writer.println(MnsSinSeguridad.mns_OK());
 			System.out.println("Se terminó la ejecución correctamente.");
 			socket.close();
 		} 
 		catch (Exception e) 
 		{
-			writer.println(Mns_Alg.mns_Error());
+			writer.println(MnsSinSeguridad.mns_Error());
 			socket.close();
 		}
 	}
@@ -272,10 +272,10 @@ public class Cliente
 		Integer.parseInt(hora_min[0]);
 		Integer.parseInt(hora_min[1]);
 	}
-	
+
 	public static void main(String[] args) throws Exception
 	{
-		final Cliente client = new Cliente();
+		final ClienteSinSeguridad client = new ClienteSinSeguridad();
 		client.etapa1();
 		client.etapa2();
 		client.etapa3();

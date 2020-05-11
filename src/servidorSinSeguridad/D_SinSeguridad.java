@@ -17,7 +17,9 @@ import java.util.Random;
 import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 
-public class D extends Thread {
+import org.bouncycastle.crypto.tls.SRTPProtectionProfile;
+
+public class D_SinSeguridad extends Thread {
 
 	public static final String OK = "OK";
 	public static final String ALGORITMOS = "ALGORITMOS";
@@ -45,7 +47,7 @@ public class D extends Thread {
 		file = pFile;
 	}
 	
-	public D (Socket csP, int idP) {
+	public D_SinSeguridad (Socket csP, int idP) {
 		sc = csP;
 		dlg = new String("delegado " + idP + ": ");
 		try {
@@ -59,11 +61,11 @@ public class D extends Thread {
 	
 	private boolean validoAlgHMAC(String nombre) 
 	{
-		return ((nombre.equals(S.HMACMD5) || 
-			 nombre.equals(S.HMACSHA1) ||
-			 nombre.equals(S.HMACSHA256) ||
-			 nombre.equals(S.HMACSHA384) ||
-			 nombre.equals(S.HMACSHA512)
+		return ((nombre.equals(S_SinSeguridad.HMACMD5) || 
+			 nombre.equals(S_SinSeguridad.HMACSHA1) ||
+			 nombre.equals(S_SinSeguridad.HMACSHA256) ||
+			 nombre.equals(S_SinSeguridad.HMACSHA384) ||
+			 nombre.equals(S_SinSeguridad.HMACSHA512)
 			 ));
 	}
 	
@@ -118,13 +120,13 @@ public class D extends Thread {
 				}
 				
 				String[] algoritmos = linea.split(SEPARADOR);
-				if (!algoritmos[1].equals(S.DES) && !algoritmos[1].equals(S.AES) &&
-					!algoritmos[1].equals(S.BLOWFISH) && !algoritmos[1].equals(S.RC4)){
+				if (!algoritmos[1].equals(S_SinSeguridad.DES) && !algoritmos[1].equals(S_SinSeguridad.AES) &&
+					!algoritmos[1].equals(S_SinSeguridad.BLOWFISH) && !algoritmos[1].equals(S_SinSeguridad.RC4)){
 					ac.println(ERROR);
 					sc.close();
 					throw new Exception(dlg + ERROR + "Alg.Simetrico" + REC + algoritmos + "-terminando.");
 				}
-				if (!algoritmos[2].equals(S.RSA) ) {
+				if (!algoritmos[2].equals(S_SinSeguridad.RSA) ) {
 					ac.println(ERROR);
 					sc.close();
 					throw new Exception(dlg + ERROR + "Alg.Asimetrico." + REC + algoritmos + "-terminando.");
@@ -167,12 +169,9 @@ public class D extends Thread {
 					cadenas[6] = dlg + REC + linea + "-continuando.";
 					System.out.println(cadenas[6]);
 				}
-
+				
 				/***** Fase 5: Envia llave simetrica *****/
-				SecretKey simetrica = S.kgg(algoritmos[1]);
-				byte [ ] ciphertext1 = S.ae(simetrica.getEncoded(), 
-						                 certificadoCliente.getPublicKey(), algoritmos[2]);
-				ac.println(toHexString(ciphertext1));
+				SecretKey simetrica = S_SinSeguridad.kgg(algoritmos[1]);
 				cadenas[7] = dlg +  ENVIO + "llave K_SC al cliente. continuado.";
 				System.out.println(cadenas[7]);
 				
@@ -182,20 +181,14 @@ public class D extends Thread {
 				String strReto = intReto+"";
 				while (strReto.length()%4!=0) strReto += "0";
 
-				String reto = strReto;
-				byte[] bytereto = toByteArray(reto);
-				byte [] cipherreto = S.se(bytereto, simetrica, algoritmos[1]);
-				ac.println(toHexString(cipherreto));
-				cadenas[8] = dlg + ENVIO + reto + "-reto al cliente. continuando ";
+				ac.println(strReto);
+				cadenas[8] = dlg + ENVIO + strReto + "-reto al cliente. continuando ";
+				ac.println("000");
 				System.out.println(cadenas[8]);
 
 				/***** Fase 6: Recibe reto del cliente *****/
-				linea = dc.readLine();
-				byte[] retodelcliente = S.ad(
-						toByteArray(linea), 
-						keyPairServidor.getPrivate(), algoritmos[2] );
-				String strdelcliente = toHexString(retodelcliente);
-				if (strdelcliente.equals(reto)) {
+				String strdelcliente = dc.readLine();
+				if (strdelcliente.equals(strReto)) {
 					cadenas[9] = dlg + REC + strdelcliente + "-reto correcto. continuado.";
 					System.out.println(cadenas[9]);
 					ac.println("OK");
@@ -207,10 +200,7 @@ public class D extends Thread {
 								
 				/***** Fase 7: Recibe identificador de usuario *****/
 				linea = dc.readLine();
-				byte[] retoByte = toByteArray(linea);
-				byte [ ] ciphertext2 = S.sd(retoByte, simetrica, algoritmos[1]);
-				String nombre = toHexString(ciphertext2);
-				cadenas[10] = dlg + REC + nombre + "-continuando";
+				cadenas[10] = dlg + REC + linea + "- continuando";
 				System.out.println(cadenas[10]);
 				
 				/***** Fase 8: Envia hora de registro *****/
@@ -223,10 +213,7 @@ public class D extends Thread {
 				else
 					strvalor = ((hora) * 100 + minuto) + "";
 				while (strvalor.length()%4!=0) strvalor = "0" + strvalor;
-				byte[] valorByte = toByteArray(strvalor);
-				byte [ ] ciphertext3 = S.se(valorByte, simetrica, algoritmos[1]);
-				ac.println(toHexString(ciphertext3));
-				cadenas[11] = dlg + ENVIO + strvalor + "-cifrado con K_SC. continuado.";
+				cadenas[11] = dlg + ENVIO + strvalor + "- continuado.";
 				System.out.println(cadenas[11]);
 		        
 				linea = dc.readLine();	

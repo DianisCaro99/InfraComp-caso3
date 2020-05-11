@@ -6,7 +6,7 @@ import javax.management.AttributeList;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-public class MonitorDesempeNo 
+public class MonitorDesempeNo_SinSeguridad 
 {
 	private double tiempoResp;
 	private double inicio;
