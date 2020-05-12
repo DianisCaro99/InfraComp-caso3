@@ -1,9 +1,11 @@
 package servidorConSeguridad;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -17,7 +19,8 @@ import java.util.Random;
 import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 
-public class D extends Thread {
+public class D extends Thread 
+{
 
 	public static final String OK = "OK";
 	public static final String ALGORITMOS = "ALGORITMOS";
@@ -37,7 +40,7 @@ public class D extends Thread {
 	private static KeyPair keyPairServidor;
 	private static File file;
 	public static final int numCadenas = 13;
-
+	private BufferedWriter buffExcel;
 	
 	public static void init(X509Certificate pCertSer, KeyPair pKeyPairServidor, File pFile) {
 		certSer = pCertSer;
@@ -45,7 +48,9 @@ public class D extends Thread {
 		file = pFile;
 	}
 	
-	public D (Socket csP, int idP) {
+	public D (Socket csP, int idP, String nomArchivo) throws IOException
+	{
+		this.buffExcel = new BufferedWriter(new FileWriter(nomArchivo+".csv",true));
 		sc = csP;
 		dlg = new String("delegado " + idP + ": ");
 		try {
@@ -96,7 +101,9 @@ public class D extends Thread {
 
 				PrintWriter ac = new PrintWriter(sc.getOutputStream() , true);
 				BufferedReader dc = new BufferedReader(new InputStreamReader(sc.getInputStream()));
-
+				
+				MonitorDesempeNo monitor = new MonitorDesempeNo();
+				
 				/***** Fase 1:  *****/
 				linea = dc.readLine();
 				if (!linea.equals(HOLA)) {
@@ -141,7 +148,9 @@ public class D extends Thread {
 				System.out.println(cadenas[2]);
 
 				
-				/***** Fase 3: Recibe certificado del cliente *****/				
+				/***** Fase 3: Recibe certificado del cliente *****/
+				monitor.iniciarTiempoRespuesta();
+				
 				String strCertificadoCliente = dc.readLine();
 				byte[] certificadoClienteBytes = new byte[520];
 				certificadoClienteBytes = toByteArray(strCertificadoCliente);
@@ -229,6 +238,8 @@ public class D extends Thread {
 				cadenas[11] = dlg + ENVIO + strvalor + "-cifrado con K_SC. continuado.";
 				System.out.println(cadenas[11]);
 		        
+				Double usoCPU = monitor.getSystemCpuLoad();
+				
 				linea = dc.readLine();	
 				if (linea.equals(OK)) {
 					cadenas[12] = dlg + REC + linea + "-Terminando exitosamente.";
@@ -237,6 +248,14 @@ public class D extends Thread {
 					cadenas[12] = dlg + REC + linea + "-Terminando con error";
 			        System.out.println(cadenas[12]);
 				}
+				
+				Double tiempoMilSeg = monitor.terminarTiempoRespuesta();
+				
+				String dato = dlg.split(":")[0]+";"+tiempoMilSeg+";"+usoCPU;
+				buffExcel.newLine();
+				buffExcel.write(dato);
+				buffExcel.close();
+				
 		        sc.close();
 		        synchronized (file) {
 		        	for (int i=0;i<numCadenas;i++) {

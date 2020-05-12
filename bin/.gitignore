@@ -1,7 +1,4 @@
-/cliente/
-/servidor/
-/servidorConSeguridad/
 /clienteConSeguridad/
-/servidorSinSeguridad/
-/clienteSinSegurida/
 /clienteSinSeguridad/
+/servidorConSeguridad/
+/servidorSinSeguridad/

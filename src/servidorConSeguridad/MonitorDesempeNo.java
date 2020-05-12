@@ -19,20 +19,11 @@ public class MonitorDesempeNo
 		inicio = System.currentTimeMillis();
 	}
 
-	public void terminarTiempoRespuesta()
+	public double terminarTiempoRespuesta()
 	{
 		fin = System.currentTimeMillis();
 		tiempoResp = (fin - inicio);
-	}
-
-	public double darTiempoRespMilSeg()
-	{
 		return tiempoResp;
-	}
-
-	public double darTiempoRespSeg()
-	{
-		return (double) ((fin - inicio)/1000);
 	}
 	// -----------------------------------------------------------------
 	// Monitor de desempeño: Uso de CPU
@@ -50,8 +41,5 @@ public class MonitorDesempeNo
 		// returns a percentage value with 1 decimal point precision
 		return ((int)(value * 1000) / 10.0);
 	}
-	// -----------------------------------------------------------------
-	// Monitor de desempeño: Número de transacciones perdidas
-	// -----------------------------------------------------------------
 	
 }

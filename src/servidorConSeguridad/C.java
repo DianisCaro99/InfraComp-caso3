@@ -30,15 +30,18 @@ public class C
 		System.out.println(MAESTRO + "Establezca el número de threads para el servidor:");
 		int numThreads = Integer.parseInt(br.readLine());
 		
+		System.out.println(MAESTRO+ "Ingrese el nombre del archivo para guardar los datos (sin .csv)");
+		String nomArchivo = br.readLine();
+		
 		System.out.println(MAESTRO + "Empezando servidor maestro en puerto " + ip);
 		// Adiciona la libreria como un proveedor de seguridad.
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());		
-		
+				
 		// Crea el archivo de log
 		File file = null;
 		keyPairServidor = S.grsa();
 		certSer = S.gc(keyPairServidor); 
-		String ruta = "./resultados.txt";
+		String ruta = "./resultadosConSeguridad.txt";
 		   
         file = new File(ruta);
         if (!file.exists())
@@ -63,7 +66,7 @@ public class C
 			{
 					Socket sc = ss.accept();
 					System.out.println(MAESTRO + "Cliente " + i + " aceptado.");
-					executorService.execute(new D(sc, i));
+					executorService.execute(new D(sc, i, nomArchivo));
 			}
 		} 
 		catch (Exception e) 
