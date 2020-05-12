@@ -30,6 +30,9 @@ public class C_SinSeguridad
 		System.out.println(MAESTRO + "Establezca el número de threads para el servidor:");
 		int numThreads = Integer.parseInt(br.readLine());
 		
+		System.out.println(MAESTRO+ "Ingrese el nombre del archivo para guardar los datos (sin .csv)");
+		String nomArchivo = br.readLine();
+	
 		System.out.println(MAESTRO + "Empezando servidor maestro en puerto " + ip);
 		// Adiciona la libreria como un proveedor de seguridad.
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());		
@@ -63,7 +66,7 @@ public class C_SinSeguridad
 			{
 					Socket sc = ss.accept();
 					System.out.println(MAESTRO + "Cliente " + i + " aceptado.");
-					executorService.execute(new D_SinSeguridad(sc, i));
+					executorService.execute(new D_SinSeguridad(sc, i, nomArchivo));
 			}
 		} 
 		catch (Exception e) 

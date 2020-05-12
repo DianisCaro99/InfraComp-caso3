@@ -8,20 +8,20 @@ import javax.management.ObjectName;
 
 public class MonitorDesempeNo 
 {
-	private double tiempoResp;
-	private double inicio;
+	private long tiempoResp;
+	private long inicio;
 	private long fin;
 	// -----------------------------------------------------------------
 	// Monitor de desempeño: Tiempo de respuesta de una transacción
 	// -----------------------------------------------------------------
 	public void iniciarTiempoRespuesta()
 	{
-		inicio = System.currentTimeMillis();
+		inicio = System.nanoTime();
 	}
 
-	public double terminarTiempoRespuesta()
+	public long terminarTiempoRespuesta()
 	{
-		fin = System.currentTimeMillis();
+		fin = System.nanoTime();
 		tiempoResp = (fin - inicio);
 		return tiempoResp;
 	}

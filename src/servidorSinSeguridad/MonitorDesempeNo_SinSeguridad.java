@@ -8,31 +8,22 @@ import javax.management.ObjectName;
 
 public class MonitorDesempeNo_SinSeguridad 
 {
-	private double tiempoResp;
-	private double inicio;
+	private long tiempoResp;
+	private long inicio;
 	private long fin;
 	// -----------------------------------------------------------------
 	// Monitor de desempeño: Tiempo de respuesta de una transacción
 	// -----------------------------------------------------------------
 	public void iniciarTiempoRespuesta()
 	{
-		inicio = System.currentTimeMillis();
+		inicio = System.nanoTime();
 	}
 
-	public void terminarTiempoRespuesta()
+	public long terminarTiempoRespuesta()
 	{
-		fin = System.currentTimeMillis();
+		fin = System.nanoTime();
 		tiempoResp = (fin - inicio);
-	}
-
-	public double darTiempoRespMilSeg()
-	{
 		return tiempoResp;
-	}
-
-	public double darTiempoRespSeg()
-	{
-		return (double) ((fin - inicio)/1000);
 	}
 	// -----------------------------------------------------------------
 	// Monitor de desempeño: Uso de CPU
@@ -50,8 +41,5 @@ public class MonitorDesempeNo_SinSeguridad
 		// returns a percentage value with 1 decimal point precision
 		return ((int)(value * 1000) / 10.0);
 	}
-	// -----------------------------------------------------------------
-	// Monitor de desempeño: Número de transacciones perdidas
-	// -----------------------------------------------------------------
 	
 }

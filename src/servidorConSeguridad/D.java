@@ -50,7 +50,7 @@ public class D extends Thread
 	
 	public D (Socket csP, int idP, String nomArchivo) throws IOException
 	{
-		this.buffExcel = new BufferedWriter(new FileWriter(nomArchivo+".csv",true));
+		this.buffExcel = new BufferedWriter(new FileWriter("./datosConSeguridad/"+nomArchivo+".csv",true));
 		sc = csP;
 		dlg = new String("delegado " + idP + ": ");
 		try {
@@ -150,7 +150,7 @@ public class D extends Thread
 				
 				/***** Fase 3: Recibe certificado del cliente *****/
 				monitor.iniciarTiempoRespuesta();
-				
+								
 				String strCertificadoCliente = dc.readLine();
 				byte[] certificadoClienteBytes = new byte[520];
 				certificadoClienteBytes = toByteArray(strCertificadoCliente);
@@ -213,7 +213,7 @@ public class D extends Thread
 				    sc.close();
 					throw new Exception(dlg + REC + strdelcliente + "-ERROR en reto. terminando");
 				}
-								
+				double usoCPUf = monitor.getSystemCpuLoad();	
 				/***** Fase 7: Recibe identificador de usuario *****/
 				linea = dc.readLine();
 				byte[] retoByte = toByteArray(linea);
@@ -238,7 +238,7 @@ public class D extends Thread
 				cadenas[11] = dlg + ENVIO + strvalor + "-cifrado con K_SC. continuado.";
 				System.out.println(cadenas[11]);
 		        
-				Double usoCPU = monitor.getSystemCpuLoad();
+				
 				
 				linea = dc.readLine();	
 				if (linea.equals(OK)) {
@@ -249,12 +249,15 @@ public class D extends Thread
 			        System.out.println(cadenas[12]);
 				}
 				
-				Double tiempoMilSeg = monitor.terminarTiempoRespuesta();
+				long tiempoMilSeg = monitor.terminarTiempoRespuesta();
 				
-				String dato = dlg.split(":")[0]+";"+tiempoMilSeg+";"+usoCPU;
-				buffExcel.newLine();
-				buffExcel.write(dato);
-				buffExcel.close();
+				String dato = dlg.split(":")[0]+";"+tiempoMilSeg+";"+(usoCPUf);
+				synchronized (buffExcel) {
+					buffExcel.newLine();
+					buffExcel.write(dato);
+					buffExcel.close();
+				}
+				
 				
 		        sc.close();
 		        synchronized (file) {
