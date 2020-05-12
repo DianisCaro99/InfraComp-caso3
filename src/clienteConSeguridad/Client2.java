@@ -119,7 +119,7 @@ public class Client2
 	// -----------------------------------------------------------------
     // Etapa1: Seleccionar algoritmos e iniciar sesión
     // -----------------------------------------------------------------
-	public synchronized void etapa1() throws Exception
+	public  void etapa1() throws Exception
 	{
 		//Creación del identificador del cliente
 		Random numAleatorio = new Random();
@@ -162,7 +162,7 @@ public class Client2
 	// -----------------------------------------------------------------
     // Etapa2: Autenticación de	cliente	y servidor
     // -----------------------------------------------------------------
-	public synchronized void etapa2() throws Exception
+	public  void etapa2() throws Exception
 	{
 		//Creación del par de llave pública y privada del del cliente
 		keyPairCliente = Mns_Alg.llaveCliente();
@@ -232,7 +232,7 @@ public class Client2
 	// -----------------------------------------------------------------
     // Etapa3: Reporte y manejo	de la actualización
     // -----------------------------------------------------------------
-	public synchronized void etapa3() throws Exception
+	public  void etapa3() throws Exception
 	{
 		
 

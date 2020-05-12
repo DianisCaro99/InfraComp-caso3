@@ -238,7 +238,7 @@ public class D extends Thread {
 			        System.out.println(cadenas[12]);
 				}
 		        sc.close();
-		        synchronized (this) {
+		        synchronized (file) {
 		        	for (int i=0;i<numCadenas;i++) {
 					    escribirMensaje(cadenas[i]);
 				    }

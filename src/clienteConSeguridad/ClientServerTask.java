@@ -8,12 +8,11 @@ public class ClientServerTask extends Task
 	public void execute() {
 		 Client2 client = new Client2();
 		try {
-			synchronized (this) {
+			
 				client.etapa1();
 				client.etapa2();
 				client.etapa3();
-			}
-				
+		
 			
 		} catch (Exception e) {
 			e.getStackTrace();
