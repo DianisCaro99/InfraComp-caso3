@@ -10,8 +10,8 @@ public class GeneratorSinSeguridad
     public GeneratorSinSeguridad() 
     {
         final Task work = this.createTask();
-        final int numberOfTasks = 52;
-        final int gapBetweenTasks = 10;
+        final int numberOfTasks = 400;
+        final int gapBetweenTasks = 20;
         (this.generator = new LoadGenerator("Client - Server Load Test", numberOfTasks, work, gapBetweenTasks)).generate();
     }
     

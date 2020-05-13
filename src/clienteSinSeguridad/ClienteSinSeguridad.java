@@ -38,19 +38,19 @@ public class ClienteSinSeguridad
 	/**
 	 * Identificador del cliente
 	 */
-	private static int id_cliente;
+	private  int id_cliente;
 	/**
 	 * Certificado digital del cliente
 	 */
-	private static X509Certificate certificadoCliente;
+	private  X509Certificate certificadoCliente;
 	/**
 	 * Certificado digital del servidor
 	 */
-	private static X509Certificate certificadoServidor;
+	private  X509Certificate certificadoServidor;
 	/**
 	 * Tupla de llave (pública-privada del cliente
 	 */
-	private static KeyPair keyPairCliente;
+	private  KeyPair keyPairCliente;
 	/**
 	 * Puerto de comunicación entre cliente-servidor
 	 */
@@ -105,7 +105,7 @@ public class ClienteSinSeguridad
 	 * @return certificado digital del cliente
 	 * @throws Exception En caso de que no se pueda crear correctamente el certificado
 	 */
-	private static X509Certificate generarCertificadoCliente(KeyPair kepair) throws Exception
+	private  X509Certificate generarCertificadoCliente(KeyPair kepair) throws Exception
 	{
 		Calendar endCalendar = Calendar.getInstance();
 		endCalendar.add(Calendar.YEAR, 10);
@@ -120,7 +120,7 @@ public class ClienteSinSeguridad
 	// -----------------------------------------------------------------
 	// Etapa1: Seleccionar algoritmos e iniciar sesión
 	// -----------------------------------------------------------------
-	public synchronized void etapa1() throws Exception
+	public void etapa1() throws Exception
 	{
 		//Creación del identificador del cliente
 		Random numAleatorio = new Random();
@@ -162,7 +162,7 @@ public class ClienteSinSeguridad
 	// -----------------------------------------------------------------
 	// Etapa2: Autenticación de	cliente	y servidor
 	// -----------------------------------------------------------------
-	public synchronized void etapa2() throws Exception
+	public void etapa2() throws Exception
 	{
 		//Creación del par de llave pública y privada del del cliente
 		try 
@@ -241,7 +241,7 @@ public class ClienteSinSeguridad
 	// -----------------------------------------------------------------
 	// Etapa3: Reporte y manejo	de la actualización
 	// -----------------------------------------------------------------
-	public synchronized void etapa3() throws Exception
+	public  void etapa3() throws Exception
 	{
 		//Envío de <idUsuario>
 		out.println(id_cliente);

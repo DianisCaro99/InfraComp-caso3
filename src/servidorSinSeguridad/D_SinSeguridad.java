@@ -51,8 +51,8 @@ public class D_SinSeguridad extends Thread {
 		file = pFile;
 	}
 
-	public D_SinSeguridad (Socket csP, int idP, String nomArchivo) throws IOException {
-		this.buffExcel = new BufferedWriter(new FileWriter("./datosSinSeguridad/"+nomArchivo+".csv",true));
+	public D_SinSeguridad (Socket csP, int idP, File file2) throws IOException {
+		this.buffExcel = new BufferedWriter(new FileWriter(file2, true));
 		sc = csP;
 		dlg = new String("delegado " + idP + ": ");
 		try {
@@ -236,11 +236,11 @@ public class D_SinSeguridad extends Thread {
 			long tiempoMilSeg = monitor.terminarTiempoRespuesta();
 
 			String dato = dlg.split(":")[0]+";"+tiempoMilSeg+";"+(usoCPUf);
-			synchronized (buffExcel) {
+			
 				buffExcel.newLine();
 				buffExcel.write(dato);
 				buffExcel.close();
-			}
+			
 
 			sc.close();
 			synchronized (file) {

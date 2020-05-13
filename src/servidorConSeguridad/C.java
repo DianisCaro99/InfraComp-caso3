@@ -50,6 +50,12 @@ public class C
         }
         FileWriter fw = new FileWriter(file);
         fw.close();
+        
+        File file2 = new File("./datosConSeguridad/"+nomArchivo+".csv");
+		if (!file2.exists())
+		{
+			file2.createNewFile();
+		}
 
         D.init(certSer, keyPairServidor,file);
         
@@ -66,7 +72,7 @@ public class C
 			{
 					Socket sc = ss.accept();
 					System.out.println(MAESTRO + "Cliente " + i + " aceptado.");
-					executorService.execute(new D(sc, i, nomArchivo));
+					executorService.execute(new D(sc, i, file2));
 			}
 		} 
 		catch (Exception e) 

@@ -12,8 +12,6 @@ public class ClientServerTask extends Task
 				client.etapa1();
 				client.etapa2();
 				client.etapa3();
-		
-			
 		} catch (Exception e) {
 			e.getStackTrace();
 		}

@@ -50,6 +50,13 @@ public class C_SinSeguridad
         }
         FileWriter fw = new FileWriter(file);
         fw.close();
+        
+        File file2 = new File("./datosSinSeguridad/"+nomArchivo+".csv");
+		if (!file2.exists())
+		{
+			file2.createNewFile();
+		}
+
 
         D_SinSeguridad.init(certSer, keyPairServidor,file);
         
@@ -66,7 +73,7 @@ public class C_SinSeguridad
 			{
 					Socket sc = ss.accept();
 					System.out.println(MAESTRO + "Cliente " + i + " aceptado.");
-					executorService.execute(new D_SinSeguridad(sc, i, nomArchivo));
+					executorService.execute(new D_SinSeguridad(sc, i, file2));
 			}
 		} 
 		catch (Exception e) 
