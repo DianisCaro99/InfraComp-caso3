@@ -57,7 +57,7 @@ public class Client2
 	/**
 	 * Host para la conexión
 	 */
-	private final static String HOST = "172.24.99.53"; 
+	private final static String HOST = "localhost"; 
 	/**
 	 * Métdo main del cliente
 	 * @param args
