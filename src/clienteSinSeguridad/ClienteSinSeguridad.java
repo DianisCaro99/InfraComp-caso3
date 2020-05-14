@@ -58,7 +58,7 @@ public class ClienteSinSeguridad
 	/**
 	 * Host para la conexión
 	 */
-	private final static String HOST = "25.70.240.231"; 
+	private final static String HOST = "localhost"; 
 	/**
 	 * Métdo main del cliente
 	 * @param args
